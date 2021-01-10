@@ -13,3 +13,5 @@
 - /sys: 虚拟文件系统，存放系统工作的信息
 - /tmp: 临时文件夹
 - /usr: unix software resource，包含所有用户的二进制文件和库文件
+
+# Ubuntu磁盘管理
