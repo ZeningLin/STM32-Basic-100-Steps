@@ -24,6 +24,8 @@ void Init(void){
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_x; //指定端口号，x为0~15之间的值，对应每一组内的引脚号
     GPIO_InitSturcture.GPIO_Speed = FPIO_Speed_50MHz; //设置端口速率，可选2，10，50MHz
     GPIO_InitSturcture.GPIO_Mode = GPIO_Mode_xx_xx; //设置端口模式
+    GPIO_Init(LEDPORT, &GPIO_InitSturcture);上述内容写入寄存器
+    
     /*
     端口模式：
     GPIO_Mode_AIN 模拟输入
