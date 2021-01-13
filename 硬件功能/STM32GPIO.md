@@ -22,7 +22,7 @@ void Init(void){
     GPIO_InitTypeDef GPIO_InitStructure; //声明结构体
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB|RCC_APB2Periph_GPIOC,Enable); //启动APB2总线
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_x|GPIO_Pin_x|GPIO_Pin_x; //指定端口号，x为0~15之间的值，对应每一组内的引脚号，可以有多个值，用‘|’隔开
-    GPIO_InitSturcture.GPIO_Speed = FPIO_Speed_50MHz; //设置端口速率，可选2，10，50MHz
+    GPIO_InitSturcture.GPIO_Speed = FPIO_Speed_50MHz; //设置端口速率，可选2，10，50MHz，端口为输入时不需要设置
     GPIO_InitSturcture.GPIO_Mode = GPIO_Mode_xx_xx; //设置端口模式
     GPIO_Init(GPIOx, &GPIO_InitSturcture); //上述内容写入寄存器，GPIOx为端口组名称，x可为ABCD，视引脚而定
     
@@ -66,4 +66,15 @@ GPIO_SetBit(GPIOx,GPIO_Pin_x);
 ```C
 GPIO_ResetBit(GPIOx,GPIO_Pin_x);
 //GPIOx为端口组，GPIO_Pin_x为端口号
+```
+
+## 示例：按键消抖
+```C
+if(!GPIO_ReadInputDataBit(GPIOx,GPIO_Pin_x)){//先判断是否为干扰
+  delay_ms(20); //延时消抖
+  if(!GPIO_ReadInputDataBit(GPIOx,GPIO_Pin_x)){//真正的读取按键状态
+    xxx;
+    while(!GPIO_ReadOutputDataBit(GPIOx,GPIO_Pin_x)); //等待按键松开
+  }
+}
 ```
