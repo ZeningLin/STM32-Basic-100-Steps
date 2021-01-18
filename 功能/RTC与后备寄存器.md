@@ -23,7 +23,7 @@
 
 #### 1.2 RTC_CRL 控制寄存器低位
 - `RTOFF`：1说明上一次的配置操作已完成，0说明未完成，对RTC的配置一定要等到其置1才能进行
-- `CNF`：配置开关，1进入配置模式，0则退出，仅当1时才能向`RTC_CNT``RTC_ALR``RTC_PRL`写入数据
+- `CNF`：配置开关，1进入配置模式，0则退出，仅当1时才能向`RTC_CNT` `RTC_ALR` `RTC_PRL`写入数据
 - `RSF`：指示与APB1总线的同步，1时说明已同步，0时未同步，需要等待其为1时才能读取数据
 - `OWF`：1时指示计数器溢出标志
 - `ALRF`：1时指示闹钟到时间
@@ -69,9 +69,9 @@ RTC_EnterConfigMode(); // 进入配置模式
 RTC_SetPrescaler(32767); //设置RTC预分频的值
 RTC_WaitForLastTask();	//等待最近一次对RTC寄存器的写操作完成
 RTC_EnterConfigMode();/// 允许配置
-void RTC_SetCounter(uint32_t CounterValue);//设置计数器初值
+RTC_SetCounter(uint32_t CounterValue);//设置计数器初值
 RTC_WaitForLastTask();	//等待最近一次对RTC寄存器的写操作完成
-void RTC_ITConfig(uint16_t RTC_IT, FunctionalState NewState)；//RTC_ITConfig(RTC_IT_SEC, ENABLE); //使能 RTC 秒中断
+RTC_ITConfig(uint16_t RTC_IT, FunctionalState NewState)；//RTC_ITConfig(RTC_IT_SEC, ENABLE); //使能 RTC 秒中断
 RTC_IRQHandler();//中断服务函数
 RTC_WaitForLastTask();//等待最近一次对RTC寄存器的写操作完成
 RTC_WaitForSynchro();	//等待RTC寄存器同步 
