@@ -35,3 +35,12 @@
   - **查询**通过调用查询标志位函数查询`USART_FLAG_RXNE`标志位判断是否有内容，之后调用`USART_ReceiveData()`读取数据
   - **中断**设置中断标志位，接受结束后进入中断服务函数，在函数中调用`USART_ReceiveData()`读取数据
 - `u8 USART_ReceiveData(USART_TypeDef* USARTx)`用于接收单个数据，返回值为接收的数据值
+
+### 查询方式
+```C
+if(USART_GetFlagStatus(USART1,USART_FLAG_RXNE) != RESET){
+			receive =USART_ReceiveData(USART1);
+            //Action
+		}
+USART_RX_STA|=0x8000;//Reset Flag
+```
