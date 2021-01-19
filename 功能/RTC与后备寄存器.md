@@ -60,21 +60,51 @@
 
 ### 总配置流程
 ```C
-RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
-PWR_BackupAccessCmd(ENABLE);//使能 RTC 和后备寄存器访问
-BKP_DeInit();//复位备份区域
-RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE); //选择 LSE 作为 RTC 时钟(RCC_RTCCLKSource_LSI 和 RCC_RTCCLKSource_HSE_Div128)
-RCC_RTCCLKCmd(ENABLE); //使能 RTC 时钟
-RTC_EnterConfigMode(); // 进入配置模式	
-RTC_SetPrescaler(32767); //设置RTC预分频的值
-RTC_WaitForLastTask();	//等待最近一次对RTC寄存器的写操作完成
-RTC_EnterConfigMode();/// 允许配置
-RTC_SetCounter(uint32_t CounterValue);//设置计数器初值
-RTC_WaitForLastTask();	//等待最近一次对RTC寄存器的写操作完成
-RTC_ITConfig(uint16_t RTC_IT, FunctionalState NewState)；//RTC_ITConfig(RTC_IT_SEC, ENABLE); //使能 RTC 秒中断
-RTC_IRQHandler();//中断服务函数
-RTC_WaitForLastTask();//等待最近一次对RTC寄存器的写操作完成
-RTC_WaitForSynchro();	//等待RTC寄存器同步 
+void RTC_First_Config(void){ 
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
+    PWR_BackupAccessCmd(ENABLE);
+    BKP_DeInit();
+    RCC_LSEConfig(RCC_LSE_ON);
+    while (RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET);   
+    RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE);
+    RCC_RTCCLKCmd(ENABLE);
+    RTC_WaitForSynchro();
+    RTC_WaitForLastTask();
+    RTC_SetPrescaler(32767); 
+    RTC_WaitForLastTask();
+    
+    RTC_ITConfig(RTC_IT_SEC, ENABLE);   
+    RTC_WaitForLastTask();
+}
+
+void RTC_Config(void){ 
+    if (BKP_ReadBackupRegister(BKP_DR1) != 0xA5A5){ 
+        RTC_First_Config();
+        BKP_WriteBackupRegister(BKP_DR1, 0xA5A5);
+    }else{
+        if (RCC_GetFlagStatus(RCC_FLAG_PORRST) != RESET){
+
+        }
+        else if (RCC_GetFlagStatus(RCC_FLAG_PINRST) != RESET){
+            
+        }       
+        RCC_ClearFlag();
+
+      
+        RCC_RTCCLKCmd(ENABLE);       
+        RTC_WaitForSynchro();
+
+        
+        RTC_ITConfig(RTC_IT_SEC, ENABLE);  
+        RTC_WaitForLastTask();
+    }
+	#ifdef RTCClockOutput_Enable   
+	    RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
+	    PWR_BackupAccessCmd(ENABLE);   
+	    BKP_TamperPinCmd(DISABLE);   
+	    BKP_RTCOutputConfig(BKP_RTCOutputSource_CalibClock);
+	#endif
+}
 ```
 
 
