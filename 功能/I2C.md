@@ -23,4 +23,90 @@
 - 接上拉电阻(理论2k，实际1~10k)
 - 在STM32F1系列中，I2C接入APB1总线，初始化时记得打开总线时钟
 - 总线上的器件拥有唯一地址，最多127个器件(新版规范增加10位地址模式，最多达1023个器件)
+----
+### 寄存器综述
+#### 时钟配置寄存器I2C_CCR
+- 控制`SCLK`信号
 
+|位置|名称|功能|
+|--|--|--|
+|15|F/S模式选择|0为标准模式，1为快速模式|
+|14|DUTY|快速模式下选择时钟占空比，0为1/3，1为9/25|
+|11:0|CCR|分频系数|
+
+其中分频系数规则如下：
+- 标准模式
+  - $T_{high} = CCR \times T_{PCLK1}$
+  - $T_{low} = CCR \times T_{PCLK1}$
+- 快速模式
+  - DUTY=0
+    - $T_{high}=CCR \times T_{PCLK1}$
+    - $T_{low}=2 \times CCR \times T_{PCLK1}$
+  - DUTY=1
+    - $T_{high}=9 \times CCR \times T_{PCLK1}$
+    - $T_{high}=16 \times CCR \times T_{PCLK1}$
+
+#### 控制寄存器`I2C_CRx`
+#### 自身地址寄存器`I2C_OARx`
+- STM32F1支持两个设备地址的模式，第一个地址支持10位模式，第二个只支持7位
+- 最高位选择地址模式，0为7位，1为10位
+- 9:0位用于10位地址
+- 7:1位用于7位地址
+#### 数据寄存器`I2C_DR`
+- 占用7:0一字节，存放接收到的数据或者要发送的数据
+#### 状态寄存器`I2C_SRx`
+----
+### 标准库开发流程
+#### 1. 初始化结构体
+```C
+typedef struct{
+    uint32_t I2C_ClockSpeed; /*!< 设置 SCL 时钟频率，此值要低于 400000*/
+    uint16_t I2C_Mode; /*!< 指定工作模式，可选 I2C 模式及 SMBUS 模式 */
+    uint16_t I2C_DutyCycle; /*指定时钟占空比，可选I2C_DutyCycle_2和I2C_DutyCycle_16_9*/
+    uint16_t I2C_OwnAddress1; /*!< 指定自身的 I2C 设备地址1 */
+    uint16_t I2C_Ack; /*!< 使能或关闭响应(一般都要使能，I2C_Ack_Enable) */
+    uint16_t I2C_AcknowledgedAddress; /*!< 指定地址的长度，可为 7 位及 10 位 */
+}I2C_InitTypeDef;
+```
+#### 2.配置I2C使用的GPIO
+- 开漏模式
+- 使能总线时钟APB1和APB2
+
+#### 3.发送数据
+```C
+void I2C_SEND_BYTE(u8 SlaveAddr,u8 writeAddr,u8 pBuffer){ //I2C发送一个字节（从地址，内部地址，内容）
+	I2C_GenerateSTART(I2C1,ENABLE); //发送开始信号
+	while(!I2C_CheckEvent(I2C1,I2C_EVENT_MASTER_MODE_SELECT)); //等待完成	
+	I2C_Send7bitAddress(I2C1,SlaveAddr, I2C_Direction_Transmitter); //发送从器件地址及状态（写入）
+	while(!I2C_CheckEvent(I2C1,I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)); //等待完成	
+	I2C_SendData(I2C1,writeAddr); //发送从器件内部寄存器地址
+	while(!I2C_CheckEvent(I2C1,I2C_EVENT_MASTER_BYTE_TRANSMITTED)); //等待完成	
+	I2C_SendData(I2C1,pBuffer); //发送要写入的内容
+	while(!I2C_CheckEvent(I2C1,I2C_EVENT_MASTER_BYTE_TRANSMITTED)); //等待完成	
+	I2C_GenerateSTOP(I2C1,ENABLE); //发送结束信号
+}
+```
+
+#### 4.接收数据
+```C
+u8 I2C_READ_BYTE(u8 SlaveAddr,u8 readAddr){ //I2C读取一个字节
+	u8 a;
+	while(I2C_GetFlagStatus(I2C1,I2C_FLAG_BUSY));
+	I2C_GenerateSTART(I2C1,ENABLE);
+	while(!I2C_CheckEvent(I2C1,I2C_EVENT_MASTER_MODE_SELECT));
+	I2C_Send7bitAddress(I2C1,SlaveAddr, I2C_Direction_Transmitter); 
+	while(!I2C_CheckEvent(I2C1,I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED));
+	I2C_Cmd(I2C1,ENABLE);
+	I2C_SendData(I2C1,readAddr);
+	while(!I2C_CheckEvent(I2C1,I2C_EVENT_MASTER_BYTE_TRANSMITTED));
+	I2C_GenerateSTART(I2C1,ENABLE);
+	while(!I2C_CheckEvent(I2C1,I2C_EVENT_MASTER_MODE_SELECT));
+	I2C_Send7bitAddress(I2C1,SlaveAddr, I2C_Direction_Receiver);
+	while(!I2C_CheckEvent(I2C1,I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED));
+	I2C_AcknowledgeConfig(I2C1,DISABLE); //最后有一个数据时关闭应答位
+	I2C_GenerateSTOP(I2C1,ENABLE);	//最后一个数据时使能停止位
+	a = I2C_ReceiveData(I2C1);
+	return a;
+}
+
+```
