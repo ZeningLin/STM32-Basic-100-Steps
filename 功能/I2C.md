@@ -24,6 +24,21 @@
 - 在STM32F1系列中，I2C接入APB1总线，初始化时记得打开总线时钟
 - 总线上的器件拥有唯一地址，最多127个器件(新版规范增加10位地址模式，最多达1023个器件)
 ----
+### STM32F1事件响应
+#### 主发送模式
+1. 产生起始信号后，触发事件`EV5`，该事件对`SR1`寄存器的`SB`位置1，表示信号已发送，可使用`I2C_CheckEvent(I2Cx,I2C_EVENT_MASTER_MODE_SELECT)`来等待查询
+2. 发送地址后，若有从机应答，则产生事件`EV6`和`EV8`，分别操作`ADDR`=1(地址已发送)和`TxE`=1(数据寄存器清空)，可使用`I2C_CheckEvent(I2C1,I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)`查询
+3. 清空`TxE`，发送数据，发送后，产生`EV8`，`TxE`=1，通过`I2C_CheckEvent(I2C1,I2C_EVENT_MASTER_BYTE_TRANSMITTED)`查询
+4. 发送数据完成后，产生停止信号，触发事件`EV8_2`，`TxE` `BTF`均置1，通讯结束
+
+- 使能中断时，上述事件发生都会触发中断，进入同一个中断服务函数
+
+#### 主接收模式
+1. 产生起始信号后，触发事件`EV5`，该事件对`SR1`寄存器的`SB`位置1，表示信号已发送，可使用`I2C_CheckEvent(I2Cx,I2C_EVENT_MASTER_MODE_SELECT)`来等待查询
+2. 发送地址后，若有从机应答，则产生事件`EV6`，`TxE`=1(数据寄存器清空)，可使用`I2C_CheckEvent(I2C1,I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)`查询
+3. 清空`TxE`，发送数据，发送后，产生`EV8`，`TxE`=1，通过`I2C_CheckEvent(I2C1,I2C_EVENT_MASTER_BYTE_TRANSMITTED)`查询
+4. 发送数据完成后，产生停止信号，触发事件`EV8_2`，`TxE` `BTF`均置1，通讯结束
+----
 ### 寄存器综述
 #### 时钟配置寄存器I2C_CCR
 - 控制`SCLK`信号
