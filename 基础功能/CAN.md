@@ -4,6 +4,7 @@
 - 芯片内部集成CAN总线控制器，但是电平转换需要借助外设，常用TJA1050(5V)(ISO 11898)
 - 两线制，分H线和L线
 - 类似RS485，一般采用双绞线，两端分别接入120Ω的匹配电阻减少回波反射，通信距离10km
+- 挂载总线APB1
 ### 波特率设置
 $$
 BaudRate = \frac{pclk1}{(1+8+7)\times 9}
@@ -35,7 +36,6 @@ $$
 ---
 
 ## 帧种类
-
 
 ### 数据帧
 - 用于发送单元向接收单元传送数据  
@@ -122,10 +122,11 @@ $$
 ## CAN在STM32F1上的使用
 ### 发送
 1. 使能时钟`RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, ENABLE);`
-2. 声明`CAN_InitTypeDef`结构并填充初始数据，调用`CAN_Init(CAN_InitTypeDef* CAN_InitStruct)`完成初始化
-3. 声明`CAN_FilterInitTypeDef`结构并填充初始数据，调用`CAN_FilterInit(CAN_FilterInitTypeDef* CAN_FilterInitSturct)`完成过滤器初始化
-4. 声明`CANTxMsg`结构，调用`mailbox = CAN_Transmit(CanTxMsg* TxMessage)` 函数发送数据，返回值对应用来传输的邮箱(u8)
-5. 为了避免发送数据时卡死，需要加入判断函数
+2. 声明`GPIO_InitTypeDef`结构初始化，端口模式设置为**上拉输入**模式
+3. 声明`CAN_InitTypeDef`结构并填充初始数据，调用`CAN_Init(CAN_InitTypeDef* CAN_InitStruct)`完成初始化
+4. 声明`CAN_FilterInitTypeDef`结构并填充初始数据，调用`CAN_FilterInit(CAN_FilterInitTypeDef* CAN_FilterInitSturct)`完成过滤器初始化
+5. 声明`CANTxMsg`结构，调用`mailbox = CAN_Transmit(CanTxMsg* TxMessage)` 函数发送数据，返回值对应用来传输的邮箱(u8)
+6. 为了避免发送数据时卡死，需要加入判断函数
    ```C
     u8 i=0;
     while((CAN_TransmitStatus(CAN1,mbox)==CAN_TxStatus_Failed)&&(i<0XFFF))i++; //等待发送结束
@@ -140,19 +141,18 @@ $$
 
 #### **初始化——CAN_InitTypeDef结构**
 ```C
-typedef struct
-{
-FunctionnalState CAN_TTCM;
-FunctionnalState CAN_ABOM;
-FunctionnalState CAN_AWUM;
-FunctionnalState CAN_NART;
-FunctionnalState CAN_RFLM;
-FunctionnalState CAN_TXFP;
-u8 CAN_Mode;
-u8 CAN_SJW;
-u8 CAN_BS1;
-u8 CAN_BS2;
-u16 CAN_Prescaler;
+typedef struct{
+   FunctionnalState CAN_TTCM;
+   FunctionnalState CAN_ABOM;
+   FunctionnalState CAN_AWUM;
+   FunctionnalState CAN_NART;
+   FunctionnalState CAN_RFLM;
+   FunctionnalState CAN_TXFP;
+   u8 CAN_Mode;
+   u8 CAN_SJW;
+   u8 CAN_BS1;
+   u8 CAN_BS2;
+   u16 CAN_Prescaler;
 } CAN_InitTypeDef;
 ```
 ##### **CAN_TTCM**
@@ -246,8 +246,7 @@ CAN_FilterActivation使能或者失能过滤器。该参数可取的值为 *ENAB
 
 #### **帧结构管理——CanTxMsg结构**
 ```C
-typedef struct
-{
+typedef struct{
     uint32_t StdId; //标准帧 ID，如果您要发送扩展帧。可以不管它
     uint32_t ExtId; //扩展帧 ID，如果您要发送标准帧。可以不管它
     uint8_t IDE; //您是想发送标准帧还是扩展帧？
@@ -318,14 +317,13 @@ Data[8]包含了待传输数据，它的取值范围为 0 到 0xFF。
 
 #### 接收数据管理——CanRxMsg结构
 ```C
-typedef struct
-{
-u32 StdId;
-u32 ExtId;
-u8 IDE;
-u8 RTR;
-u8 DLC; //接收到的数据长度
-u8 Data[8]; //接收到的数据
-u8 FMI;
+typedef struct{
+   u32 StdId;
+   u32 ExtId;
+   u8 IDE;
+   u8 RTR;
+   u8 DLC; //接收到的数据长度
+   u8 Data[8]; //接收到的数据
+   u8 FMI;
 } CanRxMsg; 
 ```
