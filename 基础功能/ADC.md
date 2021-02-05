@@ -21,7 +21,7 @@
 2. 初始化`DMA_InitTypeDef`结构体，调用`DMA_Init(DMA_Channel, *DMA_InitTypeDef DMA_InitStruct)`函数初始化参数，同时调用`DMA_Cmd(DMAx_Channely, ENABLE)`使能DMA通道
 3. 初始化`GPIO_InitTypeDef`结构体，模式设置为**模拟输入模式**
 4. 初始化`ADC_InitTypeDef`结构体，调用`void ADC_Init(ADC_TypeDef *ADCx, ADC_InitTypeDef *ADC_InitStruct)`将结构体送入
-5. 调用`ADC_RegularChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Rank, uint8_t ADC_SampleTime)`设置ADC通道优先级
+5. 调用`ADC_RegularChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Rank, uint8_t ADC_SampleTime)`设置ADC通道采样通道和采样周期
 6. `ADC_DMACmd(ADC1, ENABLE)`开启ADC的DMA支持
 7. `ADC_Cmd(ADC1, ENABLE)`使能ADC1
 8. 校准
@@ -35,6 +35,8 @@
 
 **数据读取**
 - 由于使用了DMA，因此数据直接被送入SRAM中，若使用ADC1，查映射表可知数据存放在0x4001244C单元中(0x40012400~0x400127FF为ADC1的地址空间，数据存放寄存器偏移量为0x4C，该寄存器低16位存放的即为ADC转换所得的数据；0x40012800~0x40012BFF为ADC2的地址空间)
+- 在DMA初始化结构体中，将`DMA_PeripheralBaseAddr`项设置为0x4001244C，将`DMA_MemoryBaseAddr`项设置为一个u16数组的指针，即可通过该数组读取模拟量的值。数组长度等于需要读取的模拟量的个数。
+- 使用多个ADC时，注意`ADC_InitStructure.ADC_NbrOfChannel`需要设置为使用的ADC个数，同时`ADC_RegularChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Rank, uint8_t ADC_SampleTime)`也需要调用相应的次数分别设置不同通道的采样顺序和采样周期
 
 ---
 
