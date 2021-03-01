@@ -32,7 +32,7 @@
 |MODE0|0|0|空闲时为低电平，上升沿采样|
 |MODE1|0|1|空闲时为低电平，下降沿采样|
 |MODE2|1|0|空闲时为高电平，下降沿采样|
-|MODE3|1|1|空闲时为低电平，上升沿采样|
+|MODE3|1|1|空闲时为高电平，上升沿采样|
 
 1. **在改变CPOL/CPHA位之前，必须清除SPE位将SPI禁止**。
 2. 主和从必须配置成相同的时序模式。
@@ -103,13 +103,14 @@ SPI_CPHA 设置了位捕获的时钟活动沿。
 |SPI_CPHA_1Edge| 数据捕获于第一个时钟沿|
 
 #### **SPI_NSS**
-SPI_NSS 指定了 NSS 信号由硬件（NSS 管脚）还是软件（使用 SSI 位）管理。
+SPI_NSS 指定了 NSS 信号由硬件（NSS 管脚）还是软件（使用 SSI 位）管理。根据需要选择。CH376建议使用软件管理方式
 |SPI_NSS |描述|
+|--|--|
 |SPI_NSS_Hard NSS |由外部管脚管理|
 |*SPI_NSS_Soft* |内部 NSS 信号有 SSI 位控制（软件控制片选）|
 
 #### **SPI_BaudRatePrescaler**
-SPI_BaudRatePrescaler 用来定义波特率预分频的值，这个值用以设置发送和接收的 SCK 时钟。
+SPI_BaudRatePrescaler 用来定义波特率预分频的值，这个值用以设置发送和接收的 SCK 时钟。分频值越大越稳定，调试时可逐个尝试寻找最稳定的值。
 |SPI_NSS| 描述|
 |--|--|
 |SPI_BaudRatePrescaler2 |波特率预分频值为 2|
